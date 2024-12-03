@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+</head>
+<body>
+    <div class="w3-row">
+        <div class="w3-col l4 w3-padding">
+            <form class="w3-container w3-padding" id="jsonForm">
+                <label for="name">Nombre:</label>
+                <input class="w3-input" type="text" name="first_name" required>
+                <label for="name">Apellidos:</label>
+                <input class="w3-input" type="text" name="last_name" required>
+                <label for="name">Sexo:</label>
+                <input class="w3-input" type="text" name="sexo" required>
+                <label for="name">Edad:</label>
+                <input class="w3-input" type="number" name="edad" required min="18" max="60">
+                <button class="w3-input w3-button w3-green" type="submit">Insertar registro</button>
+                <br>
+                <button class="w3-input w3-button w3-blue" type="button" id="consultar">Consultar personas</button>
+            </form>
+        </div>
+        <div class="w3-col l8">
+            <table class="w3-table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Apellidos</th>
+                        <th>Sexo</th>
+                        <th>Edad</th>
+                    </tr>
+                </thead>
+                <tbody id="tdatos"></tbody>
+            </table>
+        </div>
+    </div>
+    
+</body>
+<script>
+    document.getElementById('jsonForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const form = document.getElementById('jsonForm');
+        const formData = new FormData(form);
+        const jsonData = JSON.stringify(Object.fromEntries(formData));
+        fetch('/insert', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: jsonData
+        })
+        .then(response => response.text())
+        .then(data => alert(data))
+        .catch(error => console.error('Error:', error));
+    });
+
+    document.getElementById('consultar').addEventListener('click', function(event) {
+        event.preventDefault()
+        fetch('/getAll')
+        .then(response => response.json())
+        .then(data => {
+            let h=``;
+            data.map(d=>{
+                h+=`<tr>
+                    <td>${d.first_name}</td>
+                    <td>${d.last_name}</td>
+                    <td>${d.sexo}</td>
+                    <td>${d.edad}</td>
+                </tr>`;
+            });
+            document.getElementById("tdatos").innerHTML=h;
+        })
+        .catch(error => console.error('Error:', error));
+    });
+</script>
+</html>

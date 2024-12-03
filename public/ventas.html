@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Ventas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, textarea, button {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gestión de Ventas</h1>
+
+    <!-- Formulario para agregar ventas -->
+    <form id="ventaForm">
+        <label for="nombre">Nombre del producto:</label>
+        <input type="text" id="nombre" name="nombre" required>
+
+        <label for="descripcion">Descripción:</label>
+        <textarea id="descripcion" name="descripcion" required></textarea>
+
+        <label for="precio">Precio:</label>
+        <input type="number" id="precio" name="precio" step="0.01" required>
+
+        <label for="cantidad">Cantidad:</label>
+        <input type="number" id="cantidad" name="cantidad" required>
+
+        <button type="submit">Agregar Venta</button>
+        <p id="errorMensaje" class="error"></p>
+    </form>
+
+    <!-- Tabla para mostrar ventas -->
+    <table id="ventasTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Precio</th>
+                <th>Cantidad</th>
+                <th>Eliminar</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Las ventas se cargarán aquí dinámicamente -->
+        </tbody>
+    </table>
+
+    <script>
+        const ventaForm = document.getElementById('ventaForm');
+        const ventasTable = document.getElementById('ventasTable').getElementsByTagName('tbody')[0];
+        const errorMensaje = document.getElementById('errorMensaje');
+
+        // Cargar ventas al cargar la página
+        document.addEventListener('DOMContentLoaded', cargarVentas);
+
+        // Manejar el formulario para agregar una nueva venta
+        ventaForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            agregarVenta();
+        });
+
+        // Función para cargar todas las ventas desde el servidor
+        function cargarVentas() {
+            fetch('http://localhost:3000/getAllVentas')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error al cargar ventas');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    ventasTable.innerHTML = ''; // Limpiar tabla antes de insertar datos
+                    data.forEach(venta => {
+                        const row = ventasTable.insertRow();
+                        row.innerHTML = `
+                            <td>${venta.id}</td>
+                            <td>${venta.nombre}</td>
+                            <td>${venta.descripcion}</td>
+                            <td>${venta.precio}</td>
+                            <td>${venta.cantidad}</td>
+                            <td><button onclick="eliminarVenta(${venta.id})">Eliminar</button></td>
+                        `;
+                    });
+                })
+                .catch(error => {
+                    console.error(error);
+                    errorMensaje.textContent = 'Error al cargar ventas.';
+                });
+        }
+
+        // Función para agregar una nueva venta
+        function agregarVenta() {
+            const nuevaVenta = {
+                nombre: document.getElementById('nombre').value,
+                descripcion: document.getElementById('descripcion').value,
+                precio: parseFloat(document.getElementById('precio').value),
+                cantidad: parseInt(document.getElementById('cantidad').value, 10)
+            };
+
+            fetch('http://localhost:3000/insertVenta', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(nuevaVenta)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error al insertar venta');
+                    }
+                    return response.text();
+                })
+                .then(message => {
+                    alert(message);
+                    ventaForm.reset();
+                    cargarVentas();
+                })
+                .catch(error => {
+                    console.error(error);
+                    errorMensaje.textContent = 'Error al insertar venta.';
+                });
+        }
+
+        // Función para eliminar una venta
+        function eliminarVenta(id) {
+            if (!confirm('¿Estás seguro de que deseas eliminar esta venta?')) {
+                return;
+            }
+
+            fetch(`http://localhost:3000/deleteVenta/${id}`, {
+                method: 'DELETE'
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error al eliminar venta');
+                    }
+                    return response.text();
+                })
+                .then(message => {
+                    alert(message);
+                    cargarVentas();
+                })
+                .catch(error => {
+                    console.error(error);
+                    errorMensaje.textContent = 'Error al eliminar venta.';
+                });
+        }
+    </script>
+</body>
+</html>

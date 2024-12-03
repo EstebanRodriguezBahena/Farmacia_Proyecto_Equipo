@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Proveedores</title>
+    <link rel="stylesheet" href="style.css"> <!-- Aquí puedes añadir tu archivo de estilos si lo tienes -->
+</head>
+<body>
+    <h1>Gestión de Proveedores</h1>
+
+    <!-- Formulario para insertar proveedores -->
+    <form id="insertProveedoresForm">
+        <label for="nombre">Nombre del Proveedor:</label>
+        <input type="text" id="nombre" required>
+
+        <label for="telefono">Teléfono:</label>
+        <input type="text" id="telefono" required>
+
+        <label for="direccion">Dirección:</label>
+        <input type="text" id="direccion" required>
+
+        <button type="submit">Agregar Proveedor</button>
+    </form>
+
+    <!-- Botón para consultar proveedores -->
+    <button id="consultarProveedores" onclick="loadProveedores()">Consultar Proveedores</button>
+
+    <h2>Lista de Proveedores</h2>
+    <table id="proveedoresTable">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Teléfono</th>
+                <th>Dirección</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="proveedoresList">
+            <!-- Aquí se insertarán los proveedores mediante JavaScript -->
+        </tbody>
+    </table>
+
+    <script>
+        // Función para cargar proveedores desde la base de datos
+        function loadProveedores() {
+            fetch('/getAllProveedores')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error al obtener proveedores: ' + response.statusText);
+                    }
+                    return response.json(); // Espera una respuesta JSON
+                })
+                .then(data => {
+                    console.log("Proveedores obtenidos:", data);
+                    const proveedoresList = document.getElementById('proveedoresList');
+                    proveedoresList.innerHTML = ''; // Limpiar la lista antes de agregar los nuevos datos
+                    data.forEach(proveedor => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${proveedor.nombre}</td>
+                            <td>${proveedor.telefono}</td>
+                            <td>${proveedor.direccion}</td>
+                            <td>
+                                <button onclick="deleteProveedor(${proveedor.id})">Eliminar</button>
+                            </td>
+                        `;
+                        proveedoresList.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error al cargar proveedores:', error);
+                    alert('Error al cargar proveedores');
+                });
+        }
+
+        // Llamada para cargar proveedores al cargar la página
+        document.addEventListener('DOMContentLoaded', loadProveedores);
+
+        // Insertar proveedor
+        document.getElementById('insertProveedoresForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const nombre = document.getElementById('nombre').value;
+            const telefono = document.getElementById('telefono').value;
+            const direccion = document.getElementById('direccion').value;
+
+            fetch('/insertProveedor', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ nombre, telefono, direccion })
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert(data);  // Alerta con el mensaje del servidor
+                loadProveedores();  // Recarga la lista de proveedores
+            })
+            .catch(error => {
+                console.error('Error al insertar proveedor:', error);
+                alert('Error al insertar proveedor.');
+            });
+        });
+
+        // Eliminar proveedor
+        function deleteProveedor(id) {
+            fetch(`/deleteProveedor/${id}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert(data);  // Alerta con el mensaje del servidor
+                loadProveedores();  // Recarga la lista de proveedores
+            })
+            .catch(error => {
+                console.error('Error al eliminar proveedor:', error);
+                alert('Error al eliminar proveedor.');
+            });
+        }
+    </script>
+</body>
+</html>
